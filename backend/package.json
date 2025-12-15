@@ -10,7 +10,8 @@
     "express": "^4.19.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "@google/generative-ai": "^1.2.0"
+    "@google/genai": "^0.3.0"
+    
     
   }
 }
