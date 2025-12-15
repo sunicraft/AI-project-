@@ -1,187 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>AI YouTube SEO Tool</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuniCraft –YouTube SEO Tool</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b0c10;
-      color: #c5c6c7;
-      padding: 20px;
-    }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    h1 {
-      color: #66fcf1;
-      text-align: center;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-
-    button {
-      padding: 12px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background: #66fcf1;
-      border: none;
-      border-radius: 4px;
-    }
-
-    .result-item {
-      display: flex;
-      justify-content: space-between;
-      background: #1f2833;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 4px;
-    }
-
-    .tag-item {
-      display: inline-block;
-      background: #45a29e;
-      color: #000;
-      padding: 5px 10px;
-      margin: 4px;
-      border-radius: 20px;
-      font-size: 14px;
-    }
-
-    #preview-section {
-      margin-top: 30px;
-      padding: 15px;
-      background: #1f2833;
-      border-radius: 6px;
-    }
-  </style>
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#0B0C10;
+    color:#C5C6C7;
+}
+.header{
+    background:#1F2833;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.logo{
+    display:flex;
+    align-items:center;
+}
+.logo-circle{
+    width:45px;height:45px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#66FCF1,#45A29E);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-right:10px;
+    font-weight:bold;
+    color:#1F2833;
+}
+.container{
+    max-width:900px;
+    margin:25px auto;
+    padding:25px;
+    background:#1F2833;
+    border-radius:10px;
+}
+input{
+    width:100%;
+    padding:12px;
+    font-size:18px;
+    border-radius:6px;
+    border:2px solid #66FCF1;
+    background:#0B0C10;
+    color:#fff;
+}
+button{
+    margin-top:15px;
+    padding:10px 20px;
+    background:#66FCF1;
+    border:none;
+    border-radius:5px;
+    font-weight:bold;
+    cursor:pointer;
+}
+.result-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#0B0C10;
+    padding:12px;
+    border-left:4px solid #66FCF1;
+    margin-top:10px;
+    border-radius:6px;
+}
+.result-item span{
+    cursor:pointer;
+}
+.thumbnail-preview-area{
+    display:flex;
+    gap:20px;
+    margin-top:15px;
+    flex-wrap:wrap;
+}
+.thumbnail{
+    width:260px;
+    height:150px;
+    background:#253341;
+    border:3px solid #66FCF1;
+    position:relative;
+    border-radius:6px;
+}
+.thumbnail-text-overlay{
+    position:absolute;
+    bottom:10px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,.7);
+    padding:5px 8px;
+    border-radius:4px;
+    font-size:14px;
+    color:#fff;
+    width:90%;
+    text-align:center;
+}
+.tag-item{
+    display:inline-block;
+    background:#45A29E;
+    color:#1F2833;
+    padding:5px 10px;
+    border-radius:15px;
+    margin:4px;
+    font-size:13px;
+}
+.light-mode{
+    background:#F0F0F0;
+    color:#1F2833;
+}
+.light-mode .container,
+.light-mode .header{
+    background:#fff;
+    color:#1F2833;
+}
+.loading{
+    opacity:0.6;
+}
+</style>
 </head>
 
 <body>
 
-  <h1>AI YouTube Title Generator</h1>
+<header class="header">
+    <div class="logo">
+        <div class="logo-circle">SC</div>
+        <h2>SuniCraft</h2>
+    </div>
+    <button class="toggle-button">Toggle Light</button>
+</header>
 
-  <input
-    id="inputTitle"
-    type="text"
-    placeholder="Enter your video topic..."
-  />
+<div class="container">
+    <h2>YouTube Title Generator</h2>
+    <input id="inputTitle" placeholder="Enter video topic">
+    <button onclick="runAnalysis()">Analyze & Generate</button>
+    <div id="titles-results"></div>
+</div>
 
-  <button onclick="runAnalysis()">Analyze & Generate</button>
+<div class="container">
+    <h2>Keyword Research & Tags</h2>
+    <div id="keyword-results"></div>
+    <div id="tag-results"></div>
+</div>
 
-  <h2>AI Titles</h2>
-  <div id="titles-results"></div>
+<div class="container" id="preview-section">
+    <h2>Thumbnail & Search Preview</h2>
 
-  <h2>Keywords</h2>
-  <div id="keyword-results"></div>
+    <p><b>Title:</b> <span id="preview-title">---</span></p>
+    <p><b>Description:</b> <span id="preview-description">---</span></p>
 
-  <h2>Tags</h2>
-  <div id="tag-results"></div>
+    <div class="thumbnail-preview-area">
+        <div class="thumbnail">
+            <div class="thumbnail-text-overlay" id="desktop-title-overlay">Title</div>
+        </div>
+        <div class="thumbnail">
+            <div class="thumbnail-text-overlay" id="mobile-title-overlay">Title</div>
+        </div>
+    </div>
+</div>
 
-  <section id="preview-section">
-    <h2>Preview</h2>
-    <h3 id="preview-title"></h3>
-    <p id="preview-description"></p>
-    <div id="desktop-title-overlay"></div>
-    <div id="mobile-title-overlay"></div>
-  </section>
+<script>
+const BACKEND_URL = "https://ai-project-14h7.onrender.com";
 
-  <!-- ✅ YOUR SCRIPT (NO CHANGE NEEDED) -->
-  <script>
-    const BACKEND_URL = "https://ai-project-14h7.onrender.com";
-    let aiDescriptionSnippet = "";
+async function runAnalysis(){
+    const topic = document.getElementById("inputTitle").value.trim();
+    if(!topic){ alert("Enter topic"); return; }
 
-    async function runAnalysis() {
-      const input = document.getElementById("inputTitle").value.trim();
-      const resultsContainer = document.getElementById("titles-results");
+    const resultBox = document.getElementById("titles-results");
+    resultBox.innerHTML = "Analyzing...";
+    resultBox.classList.add("loading");
 
-      if (!input) {
-        alert("Please enter a topic first!");
-        return;
-      }
-
-      resultsContainer.innerHTML = "Generating...";
-
-      try {
-        const response = await fetch(BACKEND_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic: input })
+    try{
+        const res = await fetch(BACKEND_URL,{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ topic })
         });
 
-        if (!response.ok) throw new Error("Server error");
+        if(!res.ok) throw new Error("Backend error");
 
-        const data = await response.json();
+        const data = await res.json();
 
-        aiDescriptionSnippet =
-          data.description_snippet || "SEO optimized YouTube description.";
+        showTitles(data.titles || []);
+        showKeywords(data.keywords || []);
+        showTags(data.tags || []);
 
-        displayAITitles(data.titles || []);
-        displayKeywords(data.keywords || []);
-        displayTags(data.tags || []);
-
-      } catch (err) {
-        resultsContainer.innerHTML = "❌ Server Connection Failed";
-      }
+        updatePreview(
+            data.titles?.[0] || "Generated Title",
+            data.description_snippet || "SEO optimized description preview"
+        );
+    }catch(err){
+        resultBox.innerHTML = "❌ Server not responding";
+        console.error(err);
+    }finally{
+        resultBox.classList.remove("loading");
     }
+}
 
-    function displayAITitles(titles) {
-      const container = document.getElementById("titles-results");
-      container.innerHTML = "";
-
-      titles.forEach(title => {
+function showTitles(list){
+    const box = document.getElementById("titles-results");
+    box.innerHTML = "";
+    list.forEach(t=>{
         const div = document.createElement("div");
-        div.className = "result-item";
+        div.className="result-item";
 
         const span = document.createElement("span");
-        span.textContent = title;
-        span.onclick = () => updatePreview(title, aiDescriptionSnippet);
+        span.textContent=t;
+        span.onclick=()=>updatePreview(
+            t,
+            document.getElementById("preview-description").textContent
+        );
 
-        const btn = document.createElement("button");
-        btn.textContent = "Copy";
-        btn.onclick = () => navigator.clipboard.writeText(title);
+        const btn=document.createElement("button");
+        btn.textContent="Copy";
+        btn.onclick=()=>navigator.clipboard.writeText(t);
 
-        div.appendChild(span);
-        div.appendChild(btn);
-        container.appendChild(div);
-      });
-    }
+        div.append(span,btn);
+        box.appendChild(div);
+    });
+}
 
-    function displayKeywords(data) {
-      const container = document.getElementById("keyword-results");
-      container.innerHTML = "";
+function showKeywords(list){
+    const box=document.getElementById("keyword-results");
+    box.innerHTML="";
+    list.forEach(k=>{
+        box.innerHTML+=`<p>${k.keyword} (${k.score||50}/100)</p>`;
+    });
+}
 
-      data.forEach(item => {
-        container.innerHTML += `
-          <div class="result-item">
-            <span>${item.keyword}</span>
-            <span>${item.score}/100</span>
-          </div>`;
-      });
-    }
+function showTags(list){
+    const box=document.getElementById("tag-results");
+    box.innerHTML="";
+    list.forEach(t=>{
+        box.innerHTML+=`<span class="tag-item">#${t.replace(/\s+/g,"_")}</span>`;
+    });
+}
 
-    function displayTags(tags) {
-      const container = document.getElementById("tag-results");
-      container.innerHTML = "";
+function updatePreview(title,desc){
+    document.getElementById("preview-title").textContent = title;
+    document.getElementById("preview-description").textContent = desc;
+    document.getElementById("desktop-title-overlay").textContent = title;
+    document.getElementById("mobile-title-overlay").textContent = title;
+}
 
-      tags.forEach(tag => {
-        const span = document.createElement("span");
-        span.className = "tag-item";
-        span.textContent = "#" + tag;
-        container.appendChild(span);
-      });
-    }
-
-    function updatePreview(title, description) {
-      document.getElementById("preview-title").textContent = title;
-      document.getElementById("preview-description").textContent = description;
-    }
-  </script>
+document.querySelector(".toggle-button").onclick=()=>{
+    document.body.classList.toggle("light-mode");
+};
+</script>
 
 </body>
 </html>
