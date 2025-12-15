@@ -18,7 +18,7 @@ app.post("/api/analyze-and-generate", async (req, res) => {
       return res.status(400).json({ error: "Topic required" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const prompt = `
 Return ONLY valid JSON. No text. No explanation.
