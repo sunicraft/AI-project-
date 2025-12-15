@@ -7,33 +7,33 @@ import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// ----------- PATH SETUP -----------
+// ---------- PATH SETUP ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ----------- ENV CHECK -----------
+// ---------- ENV CHECK ----------
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-  console.error("❌ FATAL ERROR: GEMINI_API_KEY is not set.");
+  console.error("❌ FATAL ERROR: GEMINI_API_KEY is missing.");
   process.exit(1);
 }
 
-// ----------- APP INIT -----------
+// ---------- APP INIT ----------
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-// ----------- MIDDLEWARE -----------
+// ---------- MIDDLEWARE ----------
 app.use(cors());
 app.use(express.json());
 
-// ----------- ROOT ROUTE (IMPORTANT) -----------
+// ---------- ROOT ----------
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../sunicraft.html"));
 });
 
-// ----------- AI API ROUTE -----------
+// ---------- AI API ----------
 app.post("/api/analyze-and-generate", async (req, res) => {
   const { topic } = req.body;
 
@@ -42,17 +42,17 @@ app.post("/api/analyze-and-generate", async (req, res) => {
   }
 
   const prompt = `
-You are an expert YouTube SEO and content creation tool called TITLEGAN AI.
+You are an expert YouTube SEO tool called TITLEGAN AI.
 
 Topic: "${topic}"
 
-Generate exactly:
-- 5 click-worthy titles
-- 5 long-tail keywords with competition score (10–100)
+Generate EXACTLY:
+- 5 click-worthy YouTube titles
+- 5 long-tail keywords with competition score (10-100)
 - 15 YouTube tags
 - 1 SEO-rich description snippet (max 150 chars)
 
-Return ONLY valid JSON in this format:
+Respond ONLY in valid JSON:
 {
   "titles": [],
   "keywords": [{"keyword": "", "score": 0}],
@@ -65,19 +65,45 @@ Return ONLY valid JSON in this format:
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
-      config: { responseMimeType: "application/json" },
+      config: {
+        responseMimeType: "application/json",
+      },
     });
 
-    const result = JSON.parse(response.text.trim());
-    res.json(result);
+    // ---------- SAFE JSON CLEAN ----------
+    let rawText = response.text.trim();
+
+    // Remove ```json ``` wrappers if present
+    rawText = rawText.replace(/```json|```/g, "").trim();
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch (jsonErr) {
+      console.error("❌ JSON Parse Failed:", rawText);
+      return res.status(500).json({ error: "Invalid AI JSON response" });
+    }
+
+    // ---------- HARD SAFETY FORMAT ----------
+    const safeResponse = {
+      titles: Array.isArray(parsed.titles) ? parsed.titles.slice(0, 5) : [],
+      keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 5) : [],
+      tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 15) : [],
+      description_snippet:
+        typeof parsed.description_snippet === "string"
+          ? parsed.description_snippet
+          : "AI-generated SEO description not available.",
+    };
+
+    res.json(safeResponse);
 
   } catch (err) {
-    console.error("AI ERROR:", err);
+    console.error("🔥 AI ERROR:", err);
     res.status(500).json({ error: "AI generation failed" });
   }
 });
 
-// ----------- START SERVER -----------
+// ---------- START ----------
 app.listen(PORT, () => {
-  console.log(`🚀 AI Server is LIVE on PORT ${PORT}`);
+  console.log(`🚀 TITLEGAN AI Server running on PORT ${PORT}`);
 });
