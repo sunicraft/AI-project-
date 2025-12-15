@@ -1,59 +1,61 @@
 import express from "express";
 import cors from "cors";
-import { GoogleGenAI } from "@google/genai";
-import "dotenv/config";
-import path from "path";
-import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY
-});
-
 app.use(cors());
 app.use(express.json());
 
-// ✅ SERVE HTML PROPERLY
-app.use(express.static(path.join(__dirname, "../public")));
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ✅ ROOT PAGE
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
-
-// ✅ AI API
 app.post("/api/analyze-and-generate", async (req, res) => {
   try {
     const { topic } = req.body;
-    if (!topic) return res.status(400).json({ error: "Topic required" });
+    if (!topic) {
+      return res.status(400).json({ error: "Topic required" });
+    }
+
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const prompt = `
-Generate:
-- 5 titles
-- 5 keywords with score
-- 15 tags
-- 1 description snippet (max 150 chars)
+Return ONLY valid JSON. No text. No explanation.
 
-Return JSON only.
+{
+  "titles": ["title 1", "title 2", "title 3", "title 4", "title 5"],
+  "keywords": [
+    { "keyword": "keyword1", "score": 90 },
+    { "keyword": "keyword2", "score": 85 }
+  ],
+  "tags": ["tag1", "tag2", "tag3"],
+  "description_snippet": "short SEO description"
+}
+
+Topic: ${topic}
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: { responseMimeType: "application/json" }
-    });
+    const result = await model.generateContent(prompt);
+    const raw = result.response.text();
 
-    res.json(JSON.parse(response.text));
-  } catch (e) {
-    res.status(500).json({ error: "AI failed" });
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      console.error("❌ Gemini RAW:", raw);
+      return res.status(500).json({ error: "AI response invalid" });
+    }
+
+    return res.json(data);
+
+  } catch (err) {
+    console.error("❌ Server Error:", err);
+    res.status(500).json({ error: "Server failed" });
   }
 });
 
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log("🚀 Server running on", PORT);
 });
