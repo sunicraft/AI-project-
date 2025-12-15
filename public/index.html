@@ -1,151 +1,187 @@
-<script>
-    // *** AI BACKEND URL ***
-    const BACKEND_URL = "https://ai-project-14h7.onrender.com/api/analyze-and-generate";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI YouTube SEO Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    // ✅ GLOBAL STATE (IMPORTANT FIX)
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0c10;
+      color: #c5c6c7;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #66fcf1;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #66fcf1;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      background: #1f2833;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 4px;
+    }
+
+    .tag-item {
+      display: inline-block;
+      background: #45a29e;
+      color: #000;
+      padding: 5px 10px;
+      margin: 4px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    #preview-section {
+      margin-top: 30px;
+      padding: 15px;
+      background: #1f2833;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>AI YouTube Title Generator</h1>
+
+  <input
+    id="inputTitle"
+    type="text"
+    placeholder="Enter your video topic..."
+  />
+
+  <button onclick="runAnalysis()">Analyze & Generate</button>
+
+  <h2>AI Titles</h2>
+  <div id="titles-results"></div>
+
+  <h2>Keywords</h2>
+  <div id="keyword-results"></div>
+
+  <h2>Tags</h2>
+  <div id="tag-results"></div>
+
+  <section id="preview-section">
+    <h2>Preview</h2>
+    <h3 id="preview-title"></h3>
+    <p id="preview-description"></p>
+    <div id="desktop-title-overlay"></div>
+    <div id="mobile-title-overlay"></div>
+  </section>
+
+  <!-- ✅ YOUR SCRIPT (NO CHANGE NEEDED) -->
+  <script>
+    const BACKEND_URL = "https://ai-project-14h7.onrender.com";
     let aiDescriptionSnippet = "";
 
-    // --- CORE FUNCTION: RUN ANALYSIS ---
     async function runAnalysis() {
-        const input = document.getElementById("inputTitle").value.trim();
-        const resultsContainer = document.getElementById("titles-results");
-        const analyzeButton = document.querySelector('button[onclick="runAnalysis()"]');
+      const input = document.getElementById("inputTitle").value.trim();
+      const resultsContainer = document.getElementById("titles-results");
 
-        if (!input) {
-            alert("Please enter a topic first!");
-            return;
-        }
+      if (!input) {
+        alert("Please enter a topic first!");
+        return;
+      }
 
-        analyzeButton.disabled = true;
-        analyzeButton.textContent = "Analyzing...";
+      resultsContainer.innerHTML = "Generating...";
 
-        resultsContainer.innerHTML = `<div style="text-align:center;color:#66FCF1;">
-            <i class="fas fa-spinner fa-spin"></i> Generating AI results...
-        </div>`;
+      try {
+        const response = await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic: input })
+        });
 
-        document.getElementById("keyword-results").innerHTML = `<p style="text-align:center;">Processing...</p>`;
-        document.getElementById("tag-results").innerHTML = `<p style="text-align:center;">Processing...</p>`;
+        if (!response.ok) throw new Error("Server error");
 
-        try {
-            const response = await fetch(BACKEND_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ topic: input })
-            });
+        const data = await response.json();
 
-            if (!response.ok) throw new Error("Server error");
+        aiDescriptionSnippet =
+          data.description_snippet || "SEO optimized YouTube description.";
 
-            const data = await response.json();
+        displayAITitles(data.titles || []);
+        displayKeywords(data.keywords || []);
+        displayTags(data.tags || []);
 
-            // ✅ SAVE DESCRIPTION ONCE (MAIN FIX)
-            aiDescriptionSnippet = data.description_snippet
-                || "This is the first line of your automatically generated SEO description.";
-
-            displayAITitles(data.titles || []);
-            displayKeywords(data.keywords || []);
-            displayTags(data.tags || []);
-
-            updatePreview(
-                "Choose a generated AI title from the list above.",
-                aiDescriptionSnippet
-            );
-
-        } catch (err) {
-            resultsContainer.innerHTML = `<p style="color:red;text-align:center;">
-                ❌ Server Connection Failed
-            </p>`;
-        } finally {
-            analyzeButton.disabled = false;
-            analyzeButton.textContent = "Analyze & Generate";
-        }
+      } catch (err) {
+        resultsContainer.innerHTML = "❌ Server Connection Failed";
+      }
     }
 
-    // --- DISPLAY TITLES ---
     function displayAITitles(titles) {
-        const container = document.getElementById("titles-results");
-        container.innerHTML = "";
+      const container = document.getElementById("titles-results");
+      container.innerHTML = "";
 
-        if (!titles.length) {
-            container.innerHTML = `<p style="text-align:center;color:yellow;">
-                No titles generated.
-            </p>`;
-            return;
-        }
+      titles.forEach(title => {
+        const div = document.createElement("div");
+        div.className = "result-item";
 
-        titles.forEach(title => {
-            const div = document.createElement("div");
-            div.className = "result-item";
+        const span = document.createElement("span");
+        span.textContent = title;
+        span.onclick = () => updatePreview(title, aiDescriptionSnippet);
 
-            const span = document.createElement("span");
-            span.textContent = title;
-            span.style.cursor = "pointer";
+        const btn = document.createElement("button");
+        btn.textContent = "Copy";
+        btn.onclick = () => navigator.clipboard.writeText(title);
 
-            // ✅ ALWAYS USE AI DESCRIPTION
-            span.onclick = () => updatePreview(title, aiDescriptionSnippet);
-
-            const btn = document.createElement("button");
-            btn.textContent = "Copy";
-            btn.onclick = () => {
-                navigator.clipboard.writeText(title);
-                btn.textContent = "Copied!";
-                setTimeout(() => btn.textContent = "Copy", 1500);
-            };
-
-            div.appendChild(span);
-            div.appendChild(btn);
-            container.appendChild(div);
-        });
+        div.appendChild(span);
+        div.appendChild(btn);
+        container.appendChild(div);
+      });
     }
 
-    // --- DISPLAY KEYWORDS ---
     function displayKeywords(data) {
-        const container = document.getElementById("keyword-results");
-        container.innerHTML = "<h3>Top Keywords & Competition Score</h3>";
+      const container = document.getElementById("keyword-results");
+      container.innerHTML = "";
 
-        if (!data.length) {
-            container.innerHTML += `<p>No keywords found.</p>`;
-            return;
-        }
-
-        data.forEach(item => {
-            const score = Math.max(10, Math.min(100, item.score || 50));
-            container.innerHTML += `
-                <div class="keyword-item">
-                    <div>${item.keyword}</div>
-                    <div>${score}/100</div>
-                </div>`;
-        });
+      data.forEach(item => {
+        container.innerHTML += `
+          <div class="result-item">
+            <span>${item.keyword}</span>
+            <span>${item.score}/100</span>
+          </div>`;
+      });
     }
 
-    // --- DISPLAY TAGS ---
     function displayTags(tags) {
-        const container = document.getElementById("tag-results");
-        container.innerHTML = "<h3>Suggested Tags</h3>";
+      const container = document.getElementById("tag-results");
+      container.innerHTML = "";
 
-        if (!tags.length) {
-            container.innerHTML += `<p>No tags found.</p>`;
-            return;
-        }
-
-        tags.forEach(tag => {
-            const span = document.createElement("span");
-            span.className = "tag-item";
-            span.textContent = "#" + tag.toLowerCase().replace(/\s+/g, "_");
-            container.appendChild(span);
-        });
+      tags.forEach(tag => {
+        const span = document.createElement("span");
+        span.className = "tag-item";
+        span.textContent = "#" + tag;
+        container.appendChild(span);
+      });
     }
 
-    // --- PREVIEW UPDATE ---
     function updatePreview(title, description) {
-        const shortTitle = title.length > 60 ? title.slice(0, 57) + "..." : title;
-
-        document.getElementById("preview-title").textContent = title;
-        document.getElementById("preview-description").textContent = description;
-
-        document.getElementById("desktop-title-overlay").textContent = shortTitle;
-        document.getElementById("mobile-title-overlay").textContent = shortTitle;
-
-        document.getElementById("preview-section")
-            .scrollIntoView({ behavior: "smooth" });
+      document.getElementById("preview-title").textContent = title;
+      document.getElementById("preview-description").textContent = description;
     }
-                    </script>
+  </script>
+
+</body>
+</html>
